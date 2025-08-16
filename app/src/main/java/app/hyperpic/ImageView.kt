@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -15,8 +14,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import net.engawapg.lib.zoomable.rememberZoomState
 import net.engawapg.lib.zoomable.zoomable
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -24,6 +23,7 @@ import net.engawapg.lib.zoomable.zoomable
 fun ImageView(imageUri: Uri, imageName: String, imagePath: String, onBack: () -> Unit, onDelete: (String) -> Unit) {
     var openDialog by remember { mutableStateOf(false) }
     var appbarVisible by remember { mutableStateOf(true) }
+    val zoomState = rememberZoomState()
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -33,7 +33,7 @@ fun ImageView(imageUri: Uri, imageName: String, imagePath: String, onBack: () ->
             contentDescription = null,
             modifier = Modifier
                 .fillMaxSize()
-                .zoomable()
+                .zoomable(zoomState)
                 .clickable { appbarVisible = !appbarVisible }
         )
 
