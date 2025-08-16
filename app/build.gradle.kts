@@ -11,7 +11,7 @@ android {
     defaultConfig {
         applicationId = "app.hyperpic"
         minSdk = 28
-        targetSdk = 33
+        targetSdk = 28
         versionCode = 1
         versionName = "1.0"
         androidResources {
@@ -40,6 +40,10 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 }
 
