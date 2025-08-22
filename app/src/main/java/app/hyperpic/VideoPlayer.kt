@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,29 +42,44 @@ import androidx.media3.ui.PlayerView
 fun VideoPlayer(
     modifier: Modifier = Modifier,
     videoUri: String,
-    toolbarVisible: Boolean
+    toolbarVisible: Boolean,
+    shouldPlay: Boolean
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            repeatMode = Player.REPEAT_MODE_ALL 
+            repeatMode = Player.REPEAT_MODE_ALL
             setMediaItem(MediaItem.fromUri(videoUri))
             prepare()
         }
     }
 
-    var isPlaying by remember { mutableStateOf(true) }
+    var isPlaying by rememberSaveable { mutableStateOf(shouldPlay) }
+
+    DisposableEffect(exoPlayer) {
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(currentIsPlaying: Boolean) {
+                isPlaying = currentIsPlaying
+            }
+        }
+        exoPlayer.addListener(listener)
+        onDispose {
+            exoPlayer.removeListener(listener)
+        }
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_START -> {
-                    exoPlayer.playWhenReady = true
-                    exoPlayer.play()
-                }
-                Lifecycle.Event.ON_STOP -> {
+                Lifecycle.Event.ON_PAUSE -> {
                     exoPlayer.pause()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    if (isPlaying) {
+                        exoPlayer.play()
+                    }
                 }
                 Lifecycle.Event.ON_DESTROY -> {
                     exoPlayer.release()
@@ -73,13 +89,13 @@ fun VideoPlayer(
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
-            exoPlayer.release() 
+            exoPlayer.release()
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 
-    LaunchedEffect(isPlaying) {
-        if (isPlaying) {
+    LaunchedEffect(shouldPlay) {
+        if (shouldPlay) {
             exoPlayer.play()
         } else {
             exoPlayer.pause()
@@ -112,6 +128,11 @@ fun VideoPlayer(
             IconButton(
                 onClick = {
                     isPlaying = !isPlaying
+                    if (isPlaying) {
+                        exoPlayer.play()
+                    } else {
+                        exoPlayer.pause()
+                    }
                 },
                 modifier = Modifier
                     .size(56.dp)
