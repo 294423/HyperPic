@@ -1,77 +1,138 @@
 package app.hyperpic
 
-import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import androidx.compose.material3.Text
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-
+import androidx.compose.ui.unit.dp
 import app.hyperpic.data.FolderData
 import app.hyperpic.loader.Loader
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import coil.ImageLoader
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Folder(onFolderClick: (String, String) -> Unit) {
-    val context: Context = LocalContext.current
+fun Folder(
+    onFolderClick: (String, String) -> Unit,
+    onNavigateToSettings: () -> Unit,
+    imageLoader: ImageLoader,
+    hideZeroDimensionMedia: Boolean
+) {
+    val context = LocalContext.current
     val loader = remember { Loader(context) }
-    var folders by remember { mutableStateOf<List<FolderData>>(emptyList()) }
+    var folders by remember { mutableStateOf<List<FolderData>?>(null) }
+    var showMenu by remember { mutableStateOf(false) }
 
-    LaunchedEffect(key1 = Unit) {
-        folders = loader.loadFolders()
+    LaunchedEffect(hideZeroDimensionMedia) {
+        folders = loader.loadFolders(hideZeroDimensionMedia)
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Folders") }
+                title = { Text(text = "Folders") },
+                actions = {
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                    }
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Settings") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Settings,
+                                    contentDescription = "Settings"
+                                )
+                            },
+                            onClick = {
+                                showMenu = false
+                                onNavigateToSettings()
+                            }
+                        )
+                    }
+                }
             )
         }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            items(folders) { folder ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(4.dp)
-                        .clickable { onFolderClick(folder.id, folder.name) },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    AsyncImage(
-                        model = folder.thumbnailUri,
-                        contentDescription = null,
-                        modifier = Modifier.size(80.dp),
-                        contentScale = ContentScale.Crop
-                    )
+    ) { innerPadding ->
+        if (folders == null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else if (folders!!.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("No folders found.")
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                contentPadding = innerPadding,
+                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(folders!!) { folder ->
                     Column(
                         modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 8.dp)
+                            .fillMaxWidth()
+                            .clickable { onFolderClick(folder.id, folder.name) }
+                            .clip(MaterialTheme.shapes.small)
                     ) {
+                        if (folder.thumbnailUris.isNotEmpty()) {
+                            AsyncImage(
+                                model = folder.thumbnailUris.first(),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clip(MaterialTheme.shapes.small),
+                                contentScale = ContentScale.Crop,
+                                imageLoader = imageLoader
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f)
+                                    .clip(MaterialTheme.shapes.small)
+                            )
+                        }
                         Text(
                             text = folder.name,
-                            style = MaterialTheme.typography.titleMedium
+                            style = MaterialTheme.typography.bodyLarge,
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1,
+                            modifier = Modifier.padding(top = 4.dp, start = 4.dp)
                         )
                         Text(
-                            text = "${folder.count}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = "${folder.count} items",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
                         )
                     }
                 }
