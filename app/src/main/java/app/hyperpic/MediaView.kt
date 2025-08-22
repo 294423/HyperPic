@@ -35,6 +35,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,12 +52,13 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import app.hyperpic.data.MediaData
 import coil.compose.AsyncImage
+import net.engawapg.lib.zoomable.rememberZoomState
+import net.engawapg.lib.zoomable.zoomable
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
-import androidx.compose.runtime.key
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -99,15 +101,19 @@ fun MediaView(
     ) {
         HorizontalPager(state = pagerState) { page ->
             val mediaItem = media[page]
+            val zoomState = rememberZoomState()
             if (mediaItem.mimeType?.startsWith("image/") == true) {
                 AsyncImage(
                     model = mediaItem.uri,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable {
-                            toolbarVisible = !toolbarVisible
-                        },
+                        .zoomable(
+                            zoomState = zoomState,
+                            onTap = {
+                                toolbarVisible = !toolbarVisible
+                            }
+                        ),
                     contentScale = ContentScale.Fit
                 )
             } else if (mediaItem.mimeType?.startsWith("video/") == true) {
@@ -189,7 +195,7 @@ fun MediaView(
     if (openInfoDialog) {
         AlertDialog(
             onDismissRequest = { openInfoDialog = false },
-            title = { Text(text = "Media Info") },
+            title = { },
             text = {
                 Column {
                     val formattedSize = currentMedia.size?.let { sizeBytes ->
