@@ -21,7 +21,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,8 +54,8 @@ fun VideoPlayer(
             prepare()
         }
     }
-
-    var isPlaying by rememberSaveable { mutableStateOf(shouldPlay) }
+    
+    var isPlaying by remember { mutableStateOf(shouldPlay) }
 
     DisposableEffect(exoPlayer) {
         val listener = object : Player.Listener {
