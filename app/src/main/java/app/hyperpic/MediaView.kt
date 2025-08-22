@@ -102,6 +102,8 @@ fun MediaView(
         HorizontalPager(state = pagerState) { page ->
             val mediaItem = media[page]
             val zoomState = rememberZoomState()
+            val isCurrentPage = pagerState.currentPage == page
+
             if (mediaItem.mimeType?.startsWith("image/") == true) {
                 AsyncImage(
                     model = mediaItem.uri,
@@ -123,7 +125,8 @@ fun MediaView(
                             .fillMaxSize()
                             .clickable { toolbarVisible = !toolbarVisible },
                         videoUri = mediaItem.uri.toString(),
-                        toolbarVisible = toolbarVisible
+                        toolbarVisible = toolbarVisible,
+                        shouldPlay = isCurrentPage
                     )
                 }
             }
