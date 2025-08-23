@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "app.hyperpic"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "app.hyperpic"
