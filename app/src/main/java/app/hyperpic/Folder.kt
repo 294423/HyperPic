@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import coil.ImageLoader
 import coil.compose.AsyncImage
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun Folder(
     onFolderClick: (String, String) -> Unit,
@@ -76,7 +76,7 @@ fun Folder(
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                LoadingIndicator()
             }
         } else if (folders!!.isEmpty()) {
             Box(
